@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mileage Tracker</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h2>Mileage Tracker</h2>
+    
+    <form method="POST" action="/">
+        <label>Date:</label>
+        <input type="date" name="date" required><br>
+
+        <label>Current Odometer (km):</label>
+        <input type="number" name="odo" required><br>
+
+        <label>Fuel Added (L):</label>
+        <input type="number" step="0.01" name="fuel" required><br>
+
+        <label>Current Fuel Price (per L):</label>
+        <input type="number" step="0.01" name="price" required><br>
+
+        <label>Full Tank:</label>
+        <select name="full_tank">
+            <option value="Yes" selected>Yes</option>
+            <option value="No">No</option>
+        </select><br>
+
+        <button type="submit">Add Entry</button>
+    </form>
+
+    <h2>Recorded Data</h2>
+    <table>
+        <tr>
+            <th>Date</th>
+            <th>Odometer (km)</th>
+            <th>Fuel Added (L)</th>
+            <th>Cost</th>
+            <th>Full Tank</th>
+            <th>Action</th>
+        </tr>
+        {% for row in data %}
+        <tr>
+            <td>{{ row['Date'] }}</td>
+            <td>{{ row['Odometer'] }}</td>
+            <td>{{ row['FuelAdded'] }}</td>
+            <td>{{ row['Cost'] }}</td>
+            <td>{{ row['FullTank'] }}</td>
+            <td>
+                <a href="{{ url_for('delete_record', record_id=row['ID']) }}" class="delete-btn">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h2>Monthly Fuel Consumption</h2>
+    <canvas id="fuelChart"></canvas>
+
+    <h2>Average Monthly Mileage</h2>
+    <canvas id="mileageChart"></canvas>
+
+    <script>
+    window.onload = function() {
+        const fuelLabels = {{ charts['fuel_labels'] | tojson }};
+        const fuelValues = {{ charts['fuel_values'] | tojson }};
+        const mileageLabels = {{ charts['mileage_labels'] | tojson }};
+        const mileageValues = {{ charts['mileage_values'] | tojson }};
+
+        if (fuelLabels.length > 0) {
+            const fuelCtx = document.getElementById('fuelChart').getContext('2d');
+            new Chart(fuelCtx, {
+                type: 'bar',
+                data: {
+                    labels: fuelLabels,
+                    datasets: [{
+                        label: 'Fuel Added (L)',
+                        data: fuelValues,
+                        backgroundColor: '#00796b'
+                    }]
+                }
+            });
+        }
+
+        if (mileageLabels.length > 0) {
+            const mileageCtx = document.getElementById('mileageChart').getContext('2d');
+            new Chart(mileageCtx, {
+                type: 'line',
+                data: {
+                    labels: mileageLabels,
+                    datasets: [{
+                        label: 'Average Mileage (km/L)',
+                        data: mileageValues,
+                        borderColor: '#004d40',
+                        backgroundColor: 'rgba(0,77,64,0.2)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                }
+            });
+        }
+    };
+    </script>
+</body>
+</html>
